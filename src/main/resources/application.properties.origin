@@ -1,0 +1,12 @@
+spring.application.name=springcourse_project3
+
+spring.datasource.driver-class-name=
+spring.datasource.password=
+spring.datasource.username=
+spring.datasource.url=
+
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.show_sql=
+spring.jpa.properties.hibernate.dialect=
+
+spring.mvc.hiddenmethod.filter.enabled=
