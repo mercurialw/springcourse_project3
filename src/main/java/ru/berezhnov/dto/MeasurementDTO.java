@@ -16,7 +16,15 @@ public class MeasurementDTO {
     private boolean raining;
 
     @NotNull(message = "Sensor shouldn't be empty")
-    private Sensor sensor;
+    private SensorDTO sensorDTO;
+
+    public MeasurementDTO() {}
+
+    public MeasurementDTO(double value, boolean raining, SensorDTO sensorDTO) {
+        this.value = value;
+        this.raining = raining;
+        this.sensorDTO = sensorDTO;
+    }
 
     public double getValue() {
         return value;
@@ -34,11 +42,11 @@ public class MeasurementDTO {
         this.raining = raining;
     }
 
-    public Sensor getSensor() {
-        return sensor;
+    public SensorDTO getSensor() {
+        return sensorDTO;
     }
 
-    public void setSensor(Sensor sensor) {
-        this.sensor = sensor;
+    public void setSensorDTO(SensorDTO sensorDTO) {
+        this.sensorDTO = sensorDTO;
     }
 }
