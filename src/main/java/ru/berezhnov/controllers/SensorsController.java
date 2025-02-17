@@ -11,8 +11,9 @@ import org.springframework.web.bind.annotation.*;
 import ru.berezhnov.dto.SensorDTO;
 import ru.berezhnov.models.Sensor;
 import ru.berezhnov.services.SensorService;
+import ru.berezhnov.util.ErrorsUtil;
 import ru.berezhnov.util.SensorDTOValidator;
-import ru.berezhnov.util.SensorNotCreatedException;
+import ru.berezhnov.util.MeasurementException;
 
 @RestController
 @RequestMapping("/sensors")
@@ -33,21 +34,13 @@ public class SensorsController {
     public ResponseEntity<HttpStatus> createSensor(@RequestBody @Valid SensorDTO sensorDTO,
                                                         BindingResult bindingResult) {
         sensorDTOValidator.validate(sensorDTO, bindingResult);
-        if (bindingResult.hasErrors()) {
-            StringBuilder errorsMsg = new StringBuilder();
-            for (FieldError error : bindingResult.getFieldErrors()) {
-                errorsMsg.append(error.getField()).append(": ")
-                        .append(error.getDefaultMessage()).append("\n");
-            }
-            throw new SensorNotCreatedException(errorsMsg.toString());
-        }
-        Sensor sensor = modelMapper.map(sensorDTO, Sensor.class);
-        sensorService.save(sensor);
+        ErrorsUtil.validateErrors(bindingResult);
+        sensorService.register(modelMapper.map(sensorDTO, Sensor.class));
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @ExceptionHandler
-    public ResponseEntity<String> handleException(SensorNotCreatedException e) {
+    public ResponseEntity<String> handleException(MeasurementException e) {
         return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
     }
 }

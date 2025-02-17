@@ -6,16 +6,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import ru.berezhnov.dto.MeasurementDTO;
-import ru.berezhnov.dto.SensorDTO;
 import ru.berezhnov.models.Measurement;
-import ru.berezhnov.models.Sensor;
 import ru.berezhnov.services.MeasurementService;
 import ru.berezhnov.services.SensorService;
+import ru.berezhnov.util.ErrorsUtil;
 import ru.berezhnov.util.MeasurementDTOValidator;
-import ru.berezhnov.util.SensorNotFoundException;
+import ru.berezhnov.util.MeasurementException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,15 +23,13 @@ import java.util.stream.Collectors;
 public class MeasurementsController {
 
     private final MeasurementService measurementService;
-    private final SensorService sensorService;
     private final ModelMapper modelMapper;
     private final MeasurementDTOValidator measurementDTOValidator;
 
     @Autowired
-    public MeasurementsController(MeasurementService measurementService, SensorService sensorService,
+    public MeasurementsController(MeasurementService measurementService,
                                   ModelMapper modelMapper, MeasurementDTOValidator measurementDTOValidator) {
         this.measurementService = measurementService;
-        this.sensorService = sensorService;
         this.modelMapper = modelMapper;
         this.measurementDTOValidator = measurementDTOValidator;
     }
@@ -42,24 +38,13 @@ public class MeasurementsController {
     public ResponseEntity<?> addMeasurement(@RequestBody @Valid MeasurementDTO measurementDTO,
                                                      BindingResult bindingResult) {
         measurementDTOValidator.validate(measurementDTO, bindingResult);
-        if (bindingResult.hasErrors()) {
-            StringBuilder errorsMsg = new StringBuilder();
-            for (FieldError error : bindingResult.getFieldErrors()) {
-                errorsMsg.append(error.getField()).append(": ")
-                        .append(error.getDefaultMessage()).append("\n");
-            }
-            throw new SensorNotFoundException(errorsMsg.toString());
-        }
-        Sensor sensor = sensorService.findByName(measurementDTO.getSensor().getName())
-                .orElseThrow(() -> new SensorNotFoundException("Sensor does not exist"));
-        Measurement measurement = modelMapper.map(measurementDTO, Measurement.class);
-        measurement.setSensor(sensor);
-        measurementService.save(measurement);
+        ErrorsUtil.validateErrors(bindingResult);
+        measurementService.add(modelMapper.map(measurementDTO, Measurement.class));
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @ExceptionHandler
-    public ResponseEntity<String> handleException(SensorNotFoundException e) {
+    public ResponseEntity<String> handleException(MeasurementException e) {
         return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
     }
 
@@ -70,9 +55,7 @@ public class MeasurementsController {
     }
 
     private MeasurementDTO convertToMeasurementDTO(Measurement measurement) {
-        MeasurementDTO result = modelMapper.map(measurement, MeasurementDTO.class);
-        result.setSensorDTO(modelMapper.map(measurement.getSensor(), SensorDTO.class));
-        return result;
+        return modelMapper.map(measurement, MeasurementDTO.class);
     }
 
     @GetMapping("/rainyDaysCount")
